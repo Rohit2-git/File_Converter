@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FileShift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:       #080A0F;
+  --bg2:      #0D1017;
+  --s1:       #111520;  
+  --s2:       #161B2A;
+  --s3:       #1C2235;
+  --b1:       #1E2535;
+  --b2:       #28304A;
+  --b3:       #3A4460;
+  --a1:       #5B8DEF;
+  --a2:       #7C6EF7;
+  --a3:       #3ECFCF;
+  --ag:       linear-gradient(135deg,#5B8DEF,#7C6EF7);
+  --ag2:      linear-gradient(135deg,#3ECFCF,#5B8DEF);
+  --glow:     rgba(91,141,239,.2);
+  --glow2:    rgba(62,207,207,.15);
+  --ok:       #34D399;
+  --ok-bg:    rgba(52,211,153,.08);
+  --ok-b:     rgba(52,211,153,.2);
+  --err:      #F87171;
+  --err-bg:   rgba(248,113,113,.08);
+  --err-b:    rgba(248,113,113,.2);
+  --t1:       #EEF0FA;
+  --t2:       #8B93B0;
+  --t3:       #4A526B;
+  --mono:     'JetBrains Mono',monospace;
+  --r:        12px;
+}
+
+html{color-scheme:dark}
+body{
+  background:var(--bg);
+  color:var(--t1);
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:14px;
+  line-height:1.55;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* subtle grid texture */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(91,141,239,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(91,141,239,.025) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ambient orbs */
+.orb{
+  position:fixed;border-radius:50%;
+  filter:blur(80px);pointer-events:none;z-index:0;
+}
+.orb1{
+  width:500px;height:500px;
+  top:-100px;left:-100px;
+  background:radial-gradient(circle,rgba(91,141,239,.12),transparent 70%);
+}
+.orb2{
+  width:400px;height:400px;
+  bottom:-80px;right:-80px;
+  background:radial-gradient(circle,rgba(124,110,247,.1),transparent 70%);
+}
+.orb3{
+  width:300px;height:300px;
+  top:40%;left:55%;
+  background:radial-gradient(circle,rgba(62,207,207,.07),transparent 70%);
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:100;
+  height:54px;
+  background:rgba(8,10,15,.8);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;
+  padding:0 28px;gap:14px;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  font-weight:700;font-size:15px;
+  color:var(--t1);text-decoration:none;letter-spacing:-.3px;
+}
+.brand-icon{
+  width:32px;height:32px;border-radius:9px;
+  background:var(--ag);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;
+  box-shadow:0 0 18px var(--glow),0 2px 8px rgba(0,0,0,.4);
+}
+.brand-name{background:var(--ag);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+nav .spacer{flex:1}
+.status-pill{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 12px;border-radius:99px;
+  background:var(--s1);border:1px solid var(--b1);
+  font-size:11.5px;font-weight:500;color:var(--t2);
+}
+.pulse{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--ok);
+  box-shadow:0 0 8px var(--ok);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── LAYOUT ── */
+main{
+  position:relative;z-index:1;
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 310px;
+  gap:20px;
+  max-width:1060px;
+  width:100%;
+  margin:0 auto;
+  padding:36px 24px 72px;
+  align-items:start;
+}
+
+/* ── CARD ── */
+.card{
+  background:var(--s1);
+  border:1px solid var(--b1);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.03) inset;
+  transition:box-shadow .2s;
+}
+
+/* ── CARD HEADER ── */
+.c-head{
+  display:flex;align-items:center;gap:12px;
+  padding:18px 22px 16px;
+  border-bottom:1px solid var(--b1);
+}
+.c-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--s2);border:1px solid var(--b2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.c-title{font-size:13.5px;font-weight:600;color:var(--t1)}
+.c-sub{font-size:11px;color:var(--t3);margin-top:1px}
+
+/* ── DROP ZONE ── */
+.dz-pad{padding:20px}
+.dropzone{
+  position:relative;
+  border:1.5px dashed var(--b2);
+  border-radius:14px;
+  padding:40px 24px 36px;
+  text-align:center;
+  cursor:pointer;
+  background:var(--bg2);
+  transition:all .2s;
+}
+.dropzone:hover,.dropzone.drag-over{
+  border-color:var(--a1);
+  background:rgba(91,141,239,.04);
+  box-shadow:0 0 0 4px rgba(91,141,239,.06),inset 0 0 40px rgba(91,141,239,.03);
+}
+.dropzone input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.dz-icon-wrap{
+  width:60px;height:60px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(91,141,239,.12),rgba(124,110,247,.12));
+  border:1px solid rgba(91,141,239,.2);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;font-size:24px;
+  box-shadow:0 0 30px rgba(91,141,239,.12);
+}
+.dz-h{font-size:15px;font-weight:600;margin-bottom:5px}
+.dz-p{font-size:12px;color:var(--t3);margin-bottom:16px}
+.dz-chips{display:flex;justify-content:center;flex-wrap:wrap;gap:5px}
+.dz-chip{
+  font-family:var(--mono);font-size:10.5px;font-weight:500;
+  padding:3px 9px;border-radius:6px;
+  background:var(--s2);border:1px solid var(--b2);color:var(--t2);
+}
+
+/* ── FILE CHIP ── */
+.fc{
+  display:none;
+  align-items:center;gap:12px;
+  margin:0 20px 2px;
+  padding:12px 15px;
+  border-radius:11px;
+  background:var(--bg2);
+  border:1px solid var(--b2);
+}
+.fc.on{display:flex}
+.fc-badge{
+  width:40px;height:40px;border-radius:9px;
+  font-family:var(--mono);font-size:9.5px;font-weight:700;
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,.35);
+  letter-spacing:.03em;
+}
+.fc-info{flex:1;min-width:0}
+.fc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-size{font-size:11px;color:var(--t3);margin-top:2px}
+.fc-rm{
+  background:none;border:none;cursor:pointer;
+  padding:5px;border-radius:6px;
+  color:var(--t3);font-size:14px;line-height:1;
+  transition:color .15s,background .15s;
+}
+.fc-rm:hover{color:var(--err);background:var(--err-bg)}
+
+/* ── CONVERSION STRIP ── */
+.conv-strip{
+  display:none;
+  align-items:center;gap:12px;
+  padding:18px 22px;
+  border-top:1px solid var(--b1);
+  border-bottom:1px solid var(--b1);
+  background:linear-gradient(180deg,var(--s2),var(--s1));
+}
+.conv-strip.on{display:flex}
+.conv-box{
+  flex:1;min-width:0;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid var(--b2);
+  background:var(--bg2);
+  transition:border-color .25s,background .25s,box-shadow .25s;
+}
+.conv-box.lit{
+  border-color:var(--a1);
+  background:rgba(91,141,239,.06);
+  box-shadow:0 0 20px rgba(91,141,239,.1);
+}
+.conv-lbl{
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:4px;
+}
+.conv-fmt{
+  font-family:var(--mono);font-size:17px;font-weight:700;
+  color:var(--t2);transition:color .25s;
+}
+.conv-box.lit .conv-fmt{
+  color:var(--a1);
+  text-shadow:0 0 20px rgba(91,141,239,.4);
+}
+.conv-desc{font-size:11px;color:var(--t3);margin-top:3px}
+
+/* animated SVG arrow */
+.arrow-mid{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:48px}
+.arr-svg{overflow:visible}
+.arr-track{fill:none;stroke:var(--b3);stroke-width:1.5;transition:stroke .3s}
+.arr-head{fill:var(--b3);transition:fill .3s}
+.arr-traveller{
+  r:3.5;fill:var(--a1);
+  filter:drop-shadow(0 0 4px var(--a1));
+  opacity:0;
+}
+.conv-strip.on.go .arr-track{stroke:var(--a1)}
+.conv-strip.on.go .arr-head{fill:var(--a1)}
+.conv-strip.on.go .arr-traveller{animation:travel 1s ease-in-out infinite}
+@keyframes travel{
+  0%  {opacity:0;transform:translateX(-20px)}
+  20% {opacity:1}
+  80% {opacity:1}
+  100%{opacity:0;transform:translateX(20px)}
+}
+
+/* ── FORMAT GRID ── */
+.fmt-zone{padding:20px 22px 22px}
+.zone-label{
+  font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--t3);margin-bottom:13px;
+}
+.fmt-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
+  gap:8px;
+}
+.f-btn{
+  border:1px solid var(--b2);background:var(--bg2);
+  border-radius:10px;padding:12px 8px 11px;
+  cursor:pointer;text-align:center;font-family:inherit;
+  color:var(--t2);
+  transition:border-color .15s,background .15s,box-shadow .15s,transform .12s,color .15s;
+}
+.f-btn:hover:not(:disabled){
+  border-color:var(--a1);
+  background:rgba(91,141,239,.07);
+  color:var(--a1);
+  transform:translateY(-2px);
+  box-shadow:0 6px 16px rgba(91,141,239,.18);
+}
+.f-btn.on{
+  border-color:var(--a1);
+  background:rgba(91,141,239,.1);
+  color:var(--a1);
+  box-shadow:0 0 0 3px rgba(91,141,239,.14),0 6px 16px rgba(91,141,239,.18);
+}
+.f-btn:disabled{opacity:.28;cursor:not-allowed;transform:none !important}
+.f-ext{font-family:var(--mono);font-size:12.5px;font-weight:700;display:block;margin-bottom:3px}
+.f-name{font-size:10px;display:block;color:var(--t3)}
+.f-btn.on .f-name{color:rgba(91,141,239,.7)}
+.f-empty{font-size:12px;color:var(--t3)}
+
+/* ── TOAST + BUTTON ── */
+.act-zone{padding:0 22px 22px;display:flex;flex-direction:column;gap:10px}
+.toast{
+  display:none;align-items:center;gap:9px;
+  padding:11px 14px;border-radius:10px;
+  font-size:12.5px;font-weight:500;
+}
+.toast.on{display:flex}
+.toast.load{background:rgba(91,141,239,.08);border:1px solid rgba(91,141,239,.2);color:#93B8FB}
+.toast.ok  {background:var(--ok-bg);border:1px solid var(--ok-b);color:var(--ok)}
+.toast.err {background:var(--err-bg);border:1px solid var(--err-b);color:var(--err)}
+.spin{
+  width:14px;height:14px;border-radius:50%;flex-shrink:0;
+  border:2px solid rgba(91,141,239,.25);border-top-color:var(--a1);
+  animation:sp .65s linear infinite;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.cvt{
+  width:100%;padding:13px;border:none;border-radius:10px;
+  background:var(--ag);
+  color:#fff;font-size:13.5px;font-weight:700;
+  font-family:inherit;letter-spacing:.01em;cursor:pointer;
+  transition:opacity .15s,transform .12s,box-shadow .15s;
+  box-shadow:0 2px 16px var(--glow),0 1px 0 rgba(255,255,255,.1) inset;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.cvt:hover:not(:disabled){
+  opacity:.9;transform:translateY(-1px);
+  box-shadow:0 8px 24px var(--glow);
+}
+.cvt:active:not(:disabled){transform:translateY(0)}
+.cvt:disabled{
+  background:var(--s2);color:var(--t3);
+  box-shadow:none;cursor:not-allowed;
+}
+
+/* ── RIGHT COL ── */
+.right{display:flex;flex-direction:column;gap:16px}
+
+/* support table */
+.sup-rows{padding:8px 0 4px}
+.sup-row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 22px;
+  border-bottom:1px solid var(--b1);
+  transition:background .15s;
+}
+.sup-row:last-child{border-bottom:none}
+.sup-row:hover{background:var(--s2)}
+.sup-from{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--t2);width:48px;flex-shrink:0;
+}
+.sup-arrow{color:var(--t3);font-size:12px;flex-shrink:0}
+.sup-tags{display:flex;flex-wrap:wrap;gap:4px}
+.sup-tag{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  padding:2px 8px;border-radius:5px;
+  background:rgba(91,141,239,.1);
+  border:1px solid rgba(91,141,239,.18);
+  color:var(--a1);
+}
+
+/* history */
+.hist{display:none}
+.hist.on{display:block}
+.hist-list{padding:8px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.h-item{
+  display:flex;align-items:center;gap:9px;
+  padding:10px 12px;border-radius:9px;
+  background:var(--bg2);border:1px solid var(--b1);
+  font-size:12px;transition:border-color .15s;
+}
+.h-item:hover{border-color:var(--b2)}
+.h-name{flex:1;min-width:0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t1)}
+.h-route{font-family:var(--mono);font-size:10px;color:var(--t3);flex-shrink:0}
+.h-dl{
+  font-size:11px;font-weight:700;color:var(--a1);
+  text-decoration:none;flex-shrink:0;
+  padding:3px 10px;border-radius:6px;
+  background:rgba(91,141,239,.1);border:1px solid rgba(91,141,239,.18);
+  transition:background .15s;
+}
+.h-dl:hover{background:rgba(91,141,239,.2)}
+
+/* ── FOOTER ── */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid var(--b1);
+  padding:14px 28px;
+  text-align:center;
+  font-size:11.5px;color:var(--t3);
+  background:var(--bg2);
+}
+
+@media(max-width:720px){
+  main{grid-template-columns:1fr}
+  .right{order:-1}
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<nav>
+  <a class="brand" href="#">
+    <div class="brand-icon">⇄</div>
+    <span class="brand-name">FileShift</span>
+  </a>
+  <div class="spacer"></div>
+  <div class="status-pill">
+    <div class="pulse"></div>
+    Running locally
+  </div>
+</nav>
+
+<main>
+  <!-- LEFT -->
+  <div>
+    <div class="card" id="mainCard">
+
+      <div class="c-head">
+        <div class="c-icon">📂</div>
+        <div>
+          <div class="c-title">Document Converter</div>
+          <div class="c-sub">Upload a file to get started</div>
+        </div>
+      </div>
+
+      <!-- drop zone -->
+      <div class="dz-pad">
+        <div class="dropzone" id="dz">
+          <input type="file" id="fileInput" accept=".pdf,.md,.docx,.txt,.html"/>
+          <div class="dz-icon-wrap">📄</div>
+          <div class="dz-h">Drop your file here</div>
+          <div class="dz-p">or click to browse from your computer</div>
+          <div class="dz-chips">
+            <span class="dz-chip">.pdf</span>
+            <span class="dz-chip">.md</span>
+            <span class="dz-chip">.docx</span>
+            <span class="dz-chip">.txt</span>
+            <span class="dz-chip">.html</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- file chip -->
+      <div class="fc" id="fc">
+        <div class="fc-badge" id="fcBadge"></div>
+        <div class="fc-info">
+          <div class="fc-name" id="fcName"></div>
+          <div class="fc-size" id="fcSize"></div>
+        </div>
+        <button class="fc-rm" id="fcRm" title="Remove">✕</button>
+      </div>
+
+      <!-- conversion strip -->
+      <div class="conv-strip" id="convStrip">
+        <div class="conv-box lit" id="fromBox">
+          <div class="conv-lbl">Source</div>
+          <div class="conv-fmt" id="fromFmt">—</div>
+          <div class="conv-desc" id="fromDesc"></div>
+        </div>
+        <div class="arrow-mid">
+          <svg class="arr-svg" width="40" height="18" viewBox="0 0 40 18">
+            <line class="arr-track" x1="0" y1="9" x2="31" y2="9"/>
+            <polygon class="arr-head" points="31,5 40,9 31,13"/>
+            <circle class="arr-traveller" cx="15" cy="9"/>
+          </svg>
+        </div>
+        <div class="conv-box" id="toBox">
+          <div class="conv-lbl">Output</div>
+          <div class="conv-fmt" id="toFmt">—</div>
+          <div class="conv-desc" id="toDesc">Select a format</div>
+        </div>
+      </div>
+
+      <!-- format picker -->
+      <div class="fmt-zone">
+        <div class="zone-label">Choose output format</div>
+        <div class="fmt-grid" id="fmtGrid">
+          <span class="f-empty">Upload a file to see options</span>
+        </div>
+      </div>
+
+      <!-- toast + button -->
+      <div class="act-zone">
+        <div class="toast" id="toast"></div>
+        <button class="cvt" id="cvtBtn" disabled>Convert File</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <div class="card">
+      <div class="c-head">
+        <div class="c-icon">⚡</div>
+        <div>
+          <div class="c-title">Supported Formats</div>
+          <div class="c-sub">17 conversion paths available</div>
+        </div>
+      </div>
+      <div class="sup-rows" id="supRows"></div>
+    </div>
+
+    <div class="card hist" id="hist">
+      <div class="c-head">
+        <div class="c-icon">🕑</div>
+        <div>
+          <div class="c-title">Recent Conversions</div>
+          <div class="c-sub">This session only</div>
+        </div>
+      </div>
+      <div class="hist-list" id="histList"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  FileShift runs entirely on your machine — your files never leave your computer
+</footer>
+
+<script>
+const FMT={
+  pdf: {name:'PDF Document',  short:'Document', color:'#EF4444'},
+  md:  {name:'Markdown',      short:'Markdown', color:'#8B5CF6'},
+  docx:{name:'Word Document', short:'Word',     color:'#3B82F6'},
+  txt: {name:'Plain Text',    short:'Text',     color:'#6B7280'},
+  html:{name:'HTML Page',     short:'HTML',     color:'#F59E0B'},
+};
+
+let file=null, target=null, conversions={};
+
+const $=id=>document.getElementById(id);
+const ext=n=>n.split('.').pop().toLowerCase();
+const fmtSize=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';
+
+async function init(){
+  try{
+    const r=await fetch('/formats');
+    conversions=await r.json();
+    $('supRows').innerHTML=Object.entries(conversions).map(([f,ts])=>`
+      <div class="sup-row">
+        <span class="sup-from">.${f}</span>
+        <span class="sup-arrow">→</span>
+        <div class="sup-tags">${ts.map(t=>`<span class="sup-tag">.${t}</span>`).join('')}</div>
+      </div>`).join('');
+  }catch(e){}
+}
+
+function setFile(f){
+  file=f;target=null;
+  const e=ext(f.name),m=FMT[e]||{name:e.toUpperCase(),color:'#6B7280',short:e};
+
+  $('fc').classList.add('on');
+  const b=$('fcBadge');
+  b.textContent=e.toUpperCase().slice(0,4);
+  b.style.background=m.color;
+  b.style.boxShadow=`0 3px 12px ${m.color}55`;
+  $('fcName').textContent=f.name;
+  $('fcSize').textContent=fmtSize(f.size);
+
+  $('fromFmt').textContent='.'+e;
+  $('fromDesc').textContent=m.name;
+  $('convStrip').classList.add('on');
+  $('convStrip').classList.remove('go');
+  $('toFmt').textContent='—';
+  $('toDesc').textContent='Select a format';
+  $('toBox').classList.remove('lit');
+
+  const targets=conversions[e]||[];
+  $('fmtGrid').innerHTML=targets.length
+    ?targets.map(t=>{const n=(FMT[t]||{short:t}).short;
+      return`<button class="f-btn" data-t="${t}" onclick="pick('${t}')">
+        <span class="f-ext">.${t}</span>
+        <span class="f-name">${n}</span>
+      </button>`;}).join('')
+    :`<span class="f-empty">No conversions for .${e}</span>`;
+
+  $('cvtBtn').disabled=true;
+  clearToast();
+}
+
+function clearFile(){
+  file=null;target=null;
+  $('fileInput').value='';
+  $('fc').classList.remove('on');
+  $('convStrip').classList.remove('on','go');
+  $('fmtGrid').innerHTML='<span class="f-empty">Upload a file to see options</span>';
+  $('cvtBtn').disabled=true;
+  clearToast();
+}
+
+function pick(t){
+  target=t;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`[data-t="${t}"]`).classList.add('on');
+  const m=FMT[t]||{name:t};
+  $('toFmt').textContent='.'+t;
+  $('toDesc').textContent=m.name;
+  $('toBox').classList.add('lit');
+  $('convStrip').classList.add('go');
+  $('cvtBtn').disabled=false;
+  clearToast();
+}
+
+function setToast(type,html){
+  const el=$('toast');
+  el.className='toast on '+type;
+  el.innerHTML=type==='load'
+    ?`<div class="spin"></div><span>${html}</span>`
+    :`<span>${html}</span>`;
+}
+function clearToast(){
+  $('toast').className='toast';
+  $('toast').innerHTML='';
+}
+
+async function doConvert(){
+  if(!file||!target)return;
+  $('cvtBtn').disabled=true;
+  setToast('load','Converting your file…');
+  const form=new FormData();
+  form.append('file',file);
+  form.append('target_format',target);
+  try{
+    const res=await fetch('/convert',{method:'POST',body:form});
+    if(!res.ok){const e=await res.json().catch(()=>({detail:'Unknown error'}));throw new Error(e.detail||'Failed');}
+    const blob=await res.blob();
+    const stem=file.name.replace(/\.[^.]+$/,'');
+    const out=`${stem}.${target}`;
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=out;a.click();
+    setToast('ok',`✓ &nbsp;<strong>${out}</strong> is ready — downloading`);
+    addHist(file.name,ext(file.name),target,url,out);
+  }catch(e){
+    setToast('err','✕ &nbsp;'+e.message);
+  }finally{
+    $('cvtBtn').disabled=false;
+  }
+}
+
+function addHist(src,from,to,url,out){
+  $('hist').classList.add('on');
+  const d=document.createElement('div');
+  d.className='h-item';
+  d.innerHTML=`<span class="h-name" title="${out}">${out}</span>
+    <span class="h-route">.${from}→.${to}</span>
+    <a class="h-dl" href="${url}" download="${out}">↓ Save</a>`;
+  $('histList').prepend(d);
+}
+
+$('fileInput').addEventListener('change',e=>e.target.files[0]&&setFile(e.target.files[0]));
+$('fcRm').addEventListener('click',clearFile);
+$('cvtBtn').addEventListener('click',doConvert);
+
+const dz=$('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('drag-over');
+  e.dataTransfer.files[0]&&setFile(e.dataTransfer.files[0]);
+});
+
+init();
+</script>
+</body>
+</html>

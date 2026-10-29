@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+pymupdf
+reportlab
+python-docx
+pdf2docx
+beautifulsoup4
+markdown
+weasyprint
